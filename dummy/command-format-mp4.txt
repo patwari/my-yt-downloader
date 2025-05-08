@@ -1,0 +1,18 @@
+yt-dlp -f "bv*+ba/b" --merge-output-format mp4 \
+-o "%(playlist_title)s/%(playlist_index)02d. %(title)s.%(ext)s" \
+"https://www.youtube.com/watch?v=oRVJLqRp8lg&list=PL4uUU2x5ZgR1JOlcY9SZB94MW6fBE8ovU"
+
+
+--- USING ARIA downloader ---
+yt-dlp -f "bv*+ba/b" --merge-output-format mp4 \
+--external-downloader aria2c \
+--external-downloader-args "-x 16 -k 1M" \
+-o "%(playlist_title)s/%(playlist_index)02d. %(title)s.%(ext)s" \
+"https://www.youtube.com/watch?v=oRVJLqRp8lg&list=PL4uUU2x5ZgR1JOlcY9SZB94MW6fBE8ovU"
+
+
+
+---- MAX upto 1080p ----
+yt-dlp -f "bestvideo[height<=1080]+bestaudio/best[height<=1080]" --merge-output-format mp4 \
+-o "%(playlist_title)s/%(playlist_index)02d. %(title)s.%(ext)s" \
+"https://www.youtube.com/watch?v=oRVJLqRp8lg&list=PL4uUU2x5ZgR1JOlcY9SZB94MW6fBE8ovU"
