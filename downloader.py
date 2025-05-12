@@ -95,10 +95,10 @@ def start_download():
         else:
             base_cmd += f'--concurrent-fragments {concurrency} --throttled-rate 0 '
 
-        # base_cmd += f'"{link}"'
+        base_cmd += f'"{link}"'
 
-        # Optional: keep Terminal open after execution
-        base_cmd += f' "{link}"; echo "Done!"; read'
+    # Optional: keep Terminal open after execution
+    # base_cmd += f' "; echo "Done!"; read'
 
     # Escape for AppleScript
     escaped_cmd = base_cmd.replace('"', '\\"')
@@ -116,14 +116,14 @@ def start_download():
 
 # GUI Setup
 root = tk.Tk()
-root.title("YouTube Downloader")
+root.title("Tube Grabber")
 root.geometry("1000x600")  # Increase window size
 
 link_var = tk.StringVar()
 default_path = os.path.expanduser("~/Downloads/YouTube")
 folder_var = tk.StringVar(value=default_path)
 format_var = tk.StringVar(value="mp3")
-quality_var = tk.StringVar(value="4k")
+quality_var = tk.StringVar(value="best")
 aria_var = tk.BooleanVar(value=False)
 concurrency_var = tk.StringVar(value="4")
 

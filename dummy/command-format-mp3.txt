@@ -4,19 +4,9 @@ yt-dlp -x --audio-format mp3 --audio-quality 0 \
 "https://www.youtube.com/watch?v=EFWcNB3Ip28&list=PLyORnIW1xT6wbNcUZkXYcT7nSk0AQGPJC"
 
 
-yt-dlp -x --audio-format mp3 --audio-quality 0 \
---embed-metadata --embed-thumbnail \
--o "%(playlist_title)s/%(playlist_index)02d. %(title)s.%(ext)s" \
-"https://www.youtube.com/watch?v=LQPMMUGBVFY&list=PL7-3_-qFpKffn9BT7ndsJmLOJnO0GJfV1"
-
+--- Other URL ----
 
 yt-dlp -x --audio-format mp3 --audio-quality 0 \
 --embed-metadata --embed-thumbnail \
 -o "%(playlist_title)s/%(playlist_index)02d. %(title)s.%(ext)s" \
-"https://music.youtube.com/playlist?list=PL2FNzwAEEUKAGAD-PkrRxvP8Fsu9cLFne"
-
-
-yt-dlp -x --audio-format mp3 --audio-quality 0 \
---embed-metadata --embed-thumbnail \
--o "%(playlist_title)s/%(playlist_index)02d. %(title)s.%(ext)s" \
-"https://music.youtube.com/playlist?list=PLq_23KNoKVPToAbuK63NN56Gfz10Sr0em"
+"https://music.youtube.com/playlist?list=RDCLAK5uy_n9Fbdw7e6ap-98_A-8JYBmPv64v-Uaq1g"
