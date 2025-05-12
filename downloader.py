@@ -1,3 +1,4 @@
+import json
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import os
@@ -97,22 +98,26 @@ def start_download():
 
         base_cmd += f'"{link}"'
 
-    # Optional: keep Terminal open after execution
-    # base_cmd += f' "; echo "Done!"; read'
+    # Safely JSON-escape it into a quoted AppleScript string literal
+    # This handles embedded quotes, backslashes, etc.
+    escaped_cmd = json.dumps(base_cmd)
 
-    # Escape for AppleScript
-    escaped_cmd = base_cmd.replace('"', '\\"')
+    print("Command to be executed:\n", escaped_cmd)
 
-    print("Command to be executed:\n", base_cmd)
+    apple_script = f'''
+        tell application "Terminal"
+            activate
+            do script {escaped_cmd}
+        end tell
+    '''
 
-    # Use proper AppleScript line-by-line invocation
-    subprocess.run([
-        "osascript",
-        "-e", 'tell application "Terminal"',
-        "-e", 'activate',
-        "-e", f'do script "{escaped_cmd}"',
-        "-e", 'end tell'
-    ])
+    clean_env = {'PATH': os.environ.get('PATH', '')}
+    subprocess.run(
+        ['osascript', '-e', apple_script],
+        # env=clean_env
+    )
+
+
 
 # GUI Setup
 root = tk.Tk()
