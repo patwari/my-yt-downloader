@@ -4,6 +4,37 @@ from tkinter import filedialog, messagebox, ttk
 import os
 import subprocess
 import re
+import sys
+from pathlib import Path
+
+
+def get_bundled_binary_path(binary_name):
+    """Get path to bundled binary, accounting for different execution contexts."""
+    if getattr(sys, "frozen", False):
+        # Running in a PyInstaller or py2app bundle
+        if hasattr(sys, "_MEIPASS"):
+            # PyInstaller
+            bundle_dir = sys._MEIPASS
+        else:
+            # py2app
+            bundle_dir = os.path.dirname(sys.executable)
+
+        # Look for the binary in common bundle locations
+        possible_paths = [
+            os.path.join(bundle_dir, binary_name),
+            os.path.join(bundle_dir, "bin", binary_name),
+            os.path.join(bundle_dir, "..", "Resources", binary_name),
+            os.path.join(bundle_dir, "..", "MacOS", binary_name),
+        ]
+
+        for path in possible_paths:
+            if os.path.exists(path) and os.access(path, os.X_OK):
+                return path
+
+    # Fall back to system PATH
+    import shutil
+
+    return shutil.which(binary_name) or binary_name
 
 
 def browse_folder():
@@ -18,8 +49,9 @@ def is_playlist(link):
 
 def get_playlist_length(link):
     try:
+        yt_dlp_path = get_bundled_binary_path("yt-dlp")
         result = subprocess.run(
-            ["yt-dlp", "--flat-playlist", "--print", "%(id)s", link],
+            [yt_dlp_path, "--flat-playlist", "--print", "%(id)s", link],
             capture_output=True,
             text=True,
         )
@@ -75,9 +107,11 @@ def start_download():
     concurrency = concurrency_var.get()
 
     if not link or not folder:
-        messagebox.showerror(
-            "Error", "Please provide both the link and folder.")
+        messagebox.showerror("Error", "Please provide both the link and folder.")
         return
+
+    # Get the bundled yt-dlp path
+    yt_dlp_path = get_bundled_binary_path("yt-dlp")
 
     if is_playlist(link):
         count = get_playlist_length(link)
@@ -88,7 +122,7 @@ def start_download():
 
     if fmt == "mp3":
         base_cmd = (
-            f"yt-dlp -x --audio-format mp3 --audio-quality 0 "
+            f'"{yt_dlp_path}" -x --audio-format mp3 --audio-quality 0 '
             f"--embed-metadata --embed-thumbnail "
             f'-o "{outtmpl}" "{link}"'
         )
@@ -101,9 +135,7 @@ def start_download():
             "best": "bv*+ba/b",
         }
         format_selector = quality_map.get(quality, "bv*+ba/b")
-        base_cmd = (
-            f'yt-dlp -f "{format_selector}" --merge-output-format mp4 -o "{outtmpl}" '
-        )
+        base_cmd = f'"{yt_dlp_path}" -f "{format_selector}" --merge-output-format mp4 -o "{outtmpl}" '
 
         if use_aria:
             base_cmd += (
@@ -120,12 +152,12 @@ def start_download():
 
     print("Command to be executed:\n", escaped_cmd)
 
-    apple_script = f'''
+    apple_script = f"""
         tell application "Terminal"
             activate
             do script {escaped_cmd}
         end tell
-    '''
+    """
 
     clean_env = os.environ.copy()
 
@@ -152,70 +184,88 @@ aria_var = tk.BooleanVar(value=False)
 concurrency_var = tk.StringVar(value="4")
 
 # Layout
-tk.Label(root, text="YouTube Link:").grid(
-    row=0, column=0, sticky='w', padx=10, pady=10)
+tk.Label(root, text="YouTube Link:").grid(row=0, column=0, sticky="w", padx=10, pady=10)
 link_entry = tk.Entry(root, textvariable=link_var, width=65)
 link_entry.grid(row=0, column=1, padx=10)
 link_var.trace_add("write", update_link_type_text)
 # Update link type dynamically when the link changes
 
 # Link Type Display
-link_type_label = tk.Label(root, text="Link Type: NA",
-                           anchor='w', padx=10, pady=5)
-link_type_label.grid(row=1, column=1, sticky='w', padx=10)
+link_type_label = tk.Label(root, text="Link Type: NA", anchor="w", padx=10, pady=5)
+link_type_label.grid(row=1, column=1, sticky="w", padx=10)
 
 # Target Folder
 tk.Label(root, text="Target Folder:").grid(
-    row=3, column=0, sticky='w', padx=10, pady=10)
+    row=3, column=0, sticky="w", padx=10, pady=10
+)
 path_frame = tk.Frame(root)
-path_frame.grid(row=3, column=1, padx=10, pady=5, sticky='w')
-tk.Entry(path_frame, textvariable=folder_var, width=45).pack(side='left')
+path_frame.grid(row=3, column=1, padx=10, pady=5, sticky="w")
+tk.Entry(path_frame, textvariable=folder_var, width=45).pack(side="left")
 tk.Button(path_frame, text="Browse", command=browse_folder).pack(
-    side='left', padx=(5, 0))
+    side="left", padx=(5, 0)
+)
 
 # Format Dropdown
-tk.Label(root, text="Format:").grid(
-    row=4, column=0, sticky='w', padx=10, pady=10)
-tt = ttk.Combobox(root, textvariable=format_var, values=[
-                  "mp3", "mp4"], state="readonly", width=10)
+tk.Label(root, text="Format:").grid(row=4, column=0, sticky="w", padx=10, pady=10)
+tt = ttk.Combobox(
+    root, textvariable=format_var, values=["mp3", "mp4"], state="readonly", width=10
+)
 tt.grid(row=4, column=1, padx=10)
 tt.bind("<<ComboboxSelected>>", update_quality_options)
 
 # Quality Dropdown
 quality_options = ["720p", "1080p", "2k", "4k", "best"]
 tk.Label(root, text="Max Video Quality:").grid(
-    row=5, column=0, sticky='w', padx=10, pady=10)
-quality_menu = ttk.Combobox(root, textvariable=quality_var,
-                            values=quality_options, state="disabled", width=10)
+    row=5, column=0, sticky="w", padx=10, pady=10
+)
+quality_menu = ttk.Combobox(
+    root, textvariable=quality_var, values=quality_options, state="disabled", width=10
+)
 quality_menu.grid(row=5, column=1, padx=10)
 
 # Aria2 checkbox - valid only for mp4
 aria_check = tk.Checkbutton(
-    root, text="Use aria2c downloader", variable=aria_var, state="disabled")
-aria_check.grid(row=6, column=0, sticky='w', padx=10, pady=10)
+    root, text="Use aria2c downloader", variable=aria_var, state="disabled"
+)
+aria_check.grid(row=6, column=0, sticky="w", padx=10, pady=10)
 aria_check.select()
-aria_check.config(command=lambda: [
-                  toggle_concurrent_dropdown(), update_concurrent_label_color()])
+aria_check.config(
+    command=lambda: [toggle_concurrent_dropdown(), update_concurrent_label_color()]
+)
 
 # Concurrent Fragments label
 concurrent_label = tk.Label(
-    root, text="Concurrent Fragments (yt-dlp only):", foreground="grey")
-concurrent_label.grid(row=7, column=0, sticky='w', padx=10, pady=10)
+    root, text="Concurrent Fragments (yt-dlp only):", foreground="grey"
+)
+concurrent_label.grid(row=7, column=0, sticky="w", padx=10, pady=10)
 
 # Concurrent Fragments dropdown
-concurrency_menu = ttk.Combobox(root, textvariable=concurrency_var, values=[
-                                str(i) for i in range(1, 16)], state="disabled", width=5)
+concurrency_menu = ttk.Combobox(
+    root,
+    textvariable=concurrency_var,
+    values=[str(i) for i in range(1, 16)],
+    state="disabled",
+    width=5,
+)
 concurrency_menu.grid(row=7, column=1, padx=10)
 
 # Add Numbering checkbox
 add_numbering_var = tk.BooleanVar(value=True)
 add_numbering_check = tk.Checkbutton(
-    root, text="Add Numbering to Playlist", variable=add_numbering_var)
-add_numbering_check.grid(row=8, column=1, padx=10, pady=10, sticky='w')
+    root, text="Add Numbering to Playlist", variable=add_numbering_var
+)
+add_numbering_check.grid(row=8, column=1, padx=10, pady=10, sticky="w")
 
 # Download button
 download_button = tk.Button(
-    root, text="Download", command=start_download, bg="white", fg="black", width=20, height=2)
+    root,
+    text="Download",
+    command=start_download,
+    bg="white",
+    fg="black",
+    width=20,
+    height=2,
+)
 download_button.grid(row=9, column=1, pady=20)
 
 root.mainloop()

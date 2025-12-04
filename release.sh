@@ -6,14 +6,47 @@ set -e
 # Set the version number
 VERSION="0.1"
 
+# Clean up any existing build artifacts
+rm -rf build dist venv resources
+
+# Download required binaries
+echo "Downloading dependencies..."
+python3 bundle_dependencies.py
+
 # Create a virtual environment
 python3 -m venv venv
 
 # Activate the virtual environment
 source venv/bin/activate
 
+# Upgrade pip and install build tools
+pip install --upgrade pip setuptools wheel
+
+# Install py2app and dependencies
+pip install py2app
+
+# Install project dependencies
+pip install -r requirements.txt
+
+# Verify yt-dlp is available
+which yt-dlp || pip install yt-dlp
+
+# Clean previous builds
+rm -rf build dist
+
 # Run the release setup with py2app
 python3 release_setup.py py2app
+
+# Copy the bundled yt-dlp binary to the app bundle
+if [ -f "resources/yt-dlp" ]; then
+    echo "Copying yt-dlp binary to app bundle..."
+    mkdir -p "dist/TubeGrabber.app/Contents/Resources"
+    cp "resources/yt-dlp" "dist/TubeGrabber.app/Contents/Resources/"
+    chmod +x "dist/TubeGrabber.app/Contents/Resources/yt-dlp"
+fi
+
+# Deactivate virtual environment
+deactivate
 
 # Recreate the staging directory to avoid conflicts
 rm -rf dmg-staging
