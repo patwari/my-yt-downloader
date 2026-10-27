@@ -3,35 +3,20 @@
 - uses [yt-dlp](https://github.com/yt-dlp/yt-dlp) tool. This is just a UI for it.
 - This project is primarily for myself. And I haven't tested it on other devices.
 
-## Additional Features:
+## Features
 
-- Opens a new terminal instance each time, so that the UI is not blocked.
-- Ability to resume downloads for playlists. Resumes from x/Total and not from the start.
-- Ability to download via external downloader = aria, which is a bit faster.
+- Local web UI (opens in your browser at http://127.0.0.1:8765), light and dark mode.
+- Paste several links at once, one per line.
+- Queue with live progress, speed, ETA, playlist item `x of N`, cancel, retry and "Show in Finder".
+- MP3 (best quality, metadata + cover art embedded) or MP4 with a max quality.
+- Playlists go into their own folder, optionally numbered (`01. Title.mp3`).
+- Resume: re-running a playlist skips files that already exist and continues partial downloads.
+- Optional aria2c external downloader for MP4.
+- yt-dlp is updated on every launch, since YouTube breaks old versions.
 
-## Packages Used
+## Setup
 
-- `brew install yt-dlp`
-- `brew install ffmpeg`
-- `brew install python-tk`
-- `brew install aria2`
+Needs [Homebrew](https://brew.sh). Then, from this folder:
 
-### To Install
-
-1. From terminal
-
-- Clone the repository.
-- Install above dependencies
-- `python3 -m venv venv`
-- `source venv/bin/activate`
-- `pip3 install -r requirements.txt`
-- While running, if some issue comes install above packages.
-
-### To Run
-
-1. `sh run.sh` OR
-1. Open `public/TubeGrabber-xx.app` file.
-
-### To Release
-
-1. `sh release.sh`
+1. `sh install.sh` (once). Installs Python, ffmpeg, aria2 and Deno via Homebrew if missing (an existing Node.js is used instead of Deno), and sets up `.venv`.
+1. `sh run.sh` (every time). Updates yt-dlp and opens the app in your browser. Quit with Ctrl+C.

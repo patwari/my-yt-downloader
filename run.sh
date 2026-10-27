@@ -1,38 +1,15 @@
 #!/bin/bash
+set -e
+cd "$(dirname "$0")"
 
-# Check if virtual environment exists, otherwise create it
-if [ ! -d "venv" ]; then
-    echo "🔧 Virtual environment not found. Setting up..."
-    python3 -m venv venv
-    source venv/bin/activate
-
-    echo "📦 Installing dependencies..."
-    pip install --upgrade pip
-    pip install -r requirements.txt
-
-    # Check for yt-dlp
-    if ! command -v yt-dlp &> /dev/null
-    then
-        echo "❌ yt-dlp not found. Installing via Homebrew..."
-        brew install yt-dlp
-    else
-        echo "✅ yt-dlp is already installed."
-    fi
-
-    # Check for aria2c
-    if ! command -v aria2c &> /dev/null
-    then
-        echo "❌ aria2c not found. Installing via Homebrew..."
-        brew install aria2
-    else
-        echo "✅ aria2c is already installed."
-    fi
-else
-    # If venv exists, activate it
-    echo "✅ Virtual environment found. Activating..."
-    source venv/bin/activate
+if [ ! -x .venv/bin/python ]; then
+    echo "❌ Not installed yet. Run: sh install.sh"
+    exit 1
 fi
 
-# Start the GUI
-echo "🎉 Starting the GUI..."
-python downloader.py
+# YouTube breaks old yt-dlp versions often, so update on every launch
+echo "📦 Updating yt-dlp..."
+.venv/bin/pip install -q -U -r requirements.txt || echo "⚠️  Could not update yt-dlp (offline?), using the installed one."
+
+echo "🎉 Starting TubeGrabber..."
+exec .venv/bin/python -u downloader.py
